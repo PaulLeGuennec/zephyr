@@ -252,6 +252,12 @@ void bt_mesh_adv_send(struct net_buf *buf, const struct bt_mesh_send_cb *cb,
 	net_buf_put(&adv_queue, net_buf_ref(buf));
 }
 
+bt_mesh_scan_unprocressed_nonconn_ad_cb func; // = NULL;
+
+void set_callback(bt_mesh_scan_unprocressed_nonconn_ad_cb cb){
+
+	func = cb;
+}
 static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 			    u8_t adv_type, struct net_buf_simple *buf)
 {
@@ -295,6 +301,9 @@ static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 			bt_mesh_beacon_recv(buf);
 			break;
 		default:
+			if (func != NULL){
+                func(rssi,buf);
+            }
 			break;
 		}
 
