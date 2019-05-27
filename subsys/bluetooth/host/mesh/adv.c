@@ -252,20 +252,28 @@ void bt_mesh_adv_send(struct net_buf *buf, const struct bt_mesh_send_cb *cb,
 	net_buf_put(&adv_queue, net_buf_ref(buf));
 }
 
-bt_mesh_scan_unprocressed_nonconn_ad_cb func; // = NULL;
+
+
+/*Changes done here to allow a mesh device to get adv data from a non mesh device (beacon)*/
+/*Callback function pointer to be set from project code*/
+
+/* Other changes in bt_mesh_scan_cb*/
+
+bt_mesh_scan_unprocressed_nonconn_ad_cb func;
 
 void set_callback(bt_mesh_scan_unprocressed_nonconn_ad_cb cb){
-
 	func = cb;
 }
+
 static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 			    u8_t adv_type, struct net_buf_simple *buf)
 {
 	if (adv_type != BT_LE_ADV_NONCONN_IND) {
+		if (func != NULL){
+			func(rssi,buf);
+		}
 		return;
 	}
-
-	BT_DBG("len %u: %s", buf->len, bt_hex(buf->data, buf->len));
 
 	while (buf->len > 1) {
 		struct net_buf_simple_state state;
@@ -301,9 +309,6 @@ static void bt_mesh_scan_cb(const bt_addr_le_t *addr, s8_t rssi,
 			bt_mesh_beacon_recv(buf);
 			break;
 		default:
-			if (func != NULL){
-                func(rssi,buf);
-            }
 			break;
 		}
 
